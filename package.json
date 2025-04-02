@@ -1,6 +1,6 @@
 {
     "name": "@liixing/react-native-fast-image",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "🚩 FastImage, performant React Native image component.",
     "keywords": [
         "cache",
