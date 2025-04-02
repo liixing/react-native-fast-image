@@ -274,7 +274,7 @@
     
     // If cacheKey is provided, add it to the context
     if (source.cacheKey.length > 0) {
-        mutableContext[SDWebImageContextImageCacheKeyFilter] = [SDWebImageCacheKeyFilter cacheKeyFilterWithBlock:^NSString * _Nullable(NSURL * _Nonnull url) {
+        mutableContext[SDWebImageContextCacheKeyFilter] = [SDWebImageCacheKeyFilter cacheKeyFilterWithBlock:^NSString * _Nullable(NSURL * _Nonnull url) {
             return source.cacheKey;
         }];
     }
