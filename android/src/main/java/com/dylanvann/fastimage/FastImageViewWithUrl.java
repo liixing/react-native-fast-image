@@ -61,12 +61,13 @@ class FastImageViewWithUrl extends AppCompatImageView {
         if (!mNeedsReload)
             return;
 
-        if ((mSource == null ||
-                !mSource.hasKey("uri") ||
-                isNullOrEmpty(mSource.getString("uri"))) &&
-                mDefaultSource == null) {
+        // Check if we have a valid source
+        boolean hasValidSource = mSource != null && 
+                mSource.hasKey("uri") && 
+                !isNullOrEmpty(mSource.getString("uri"));
 
-            // Cancel existing requests.
+        if (!hasValidSource && mDefaultSource == null) {
+            // No valid source and no default source - show error
             clearView(requestManager);
 
             if (glideUrl != null) {
@@ -86,27 +87,51 @@ class FastImageViewWithUrl extends AppCompatImageView {
             return;
         }
 
-        //final GlideUrl glideUrl = FastImageViewConverter.getGlideUrl(view.getContext(), mSource);
-        final FastImageSource imageSource = FastImageViewConverter.getImageSource(getContext(), mSource);
-
-        if (imageSource != null && imageSource.getUri().toString().length() == 0) {
-            ThemedReactContext context = (ThemedReactContext) getContext();
-            EventDispatcher dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, getId());
-            int surfaceId = UIManagerHelper.getSurfaceId(this);
-            FastImageErrorEvent event = new FastImageErrorEvent(surfaceId, getId(), mSource);
-
-            if (dispatcher != null) {
-                dispatcher.dispatchEvent(event);
-            }
-            // Cancel existing requests.
+        if (!hasValidSource && mDefaultSource != null) {
+            // No valid source but we have a default source - show default source directly
             clearView(requestManager);
 
             if (glideUrl != null) {
                 FastImageOkHttpProgressGlideModule.forget(glideUrl.toStringUrl());
             }
-            // Clear the image.
-            setImageDrawable(null);
+
+            // Set the default source directly
+            setImageDrawable(mDefaultSource);
+            mNeedsReload = false;
             return;
+        }
+
+        // We have a valid source, proceed with normal loading
+        final FastImageSource imageSource = FastImageViewConverter.getImageSource(getContext(), mSource);
+
+        if (imageSource != null && imageSource.getUri().toString().length() == 0) {
+            // Handle invalid image source
+            if (mDefaultSource != null) {
+                // Show default source if available
+                clearView(requestManager);
+                if (glideUrl != null) {
+                    FastImageOkHttpProgressGlideModule.forget(glideUrl.toStringUrl());
+                }
+                setImageDrawable(mDefaultSource);
+                mNeedsReload = false;
+                return;
+            } else {
+                // No default source, show error
+                ThemedReactContext context = (ThemedReactContext) getContext();
+                EventDispatcher dispatcher = UIManagerHelper.getEventDispatcherForReactTag(context, getId());
+                int surfaceId = UIManagerHelper.getSurfaceId(this);
+                FastImageErrorEvent event = new FastImageErrorEvent(surfaceId, getId(), mSource);
+
+                if (dispatcher != null) {
+                    dispatcher.dispatchEvent(event);
+                }
+                clearView(requestManager);
+                if (glideUrl != null) {
+                    FastImageOkHttpProgressGlideModule.forget(glideUrl.toStringUrl());
+                }
+                setImageDrawable(null);
+                return;
+            }
         }
 
         // `imageSource` may be null and we still continue, if `defaultSource` is not null
@@ -176,6 +201,8 @@ class FastImageViewWithUrl extends AppCompatImageView {
                 imageSource != null ? imageSource.getUri().toString() : "null", e.getMessage()), e);
             }
         }
+
+        mNeedsReload = false;
     }
 
     public void clearView(@Nullable RequestManager requestManager) {

@@ -80,7 +80,15 @@ using namespace facebook::react;
     FFFastImageSource *imageSource = [RCTConvert FFFastImageSource:imageSourcePropsDict];
 
     [fastImageView setSource: imageSource];
-
+    
+     // Handle defaultSource
+    if (!newViewProps.defaultSource.empty()) {
+        NSNumber *defaultSourceNumber = @([newViewProps.defaultSource intValue]);
+        UIImage *defaultImage = [RCTConvert UIImage:defaultSourceNumber];
+        [fastImageView setDefaultSource:defaultImage];
+    } else {
+        [fastImageView setDefaultSource:nil];
+    }
 
     RCTResizeMode resizeMode;
     switch (newViewProps.resizeMode) {
