@@ -1,11 +1,8 @@
+#if !defined(RCT_NEW_ARCH_ENABLED) || RCT_NEW_ARCH_ENABLED == 0
+
 #import "FFFastImageViewManager.h"
 #import "FFFastImageView.h"
 
-#import <SDWebImage/SDImageCache.h>
-#import <SDWebImage/SDWebImagePrefetcher.h>
-#ifdef RCT_NEW_ARCH_ENABLED
-#import <RNFastImageSpec/RNFastImageSpec.h>
-#endif
 @implementation FFFastImageViewManager
 
 RCT_EXPORT_MODULE(FastImageView)
@@ -84,3 +81,5 @@ RCT_EXPORT_METHOD(getCacheSize:(RCTPromiseResolveBlock)resolve
 #endif
 
 @end
+
+#endif

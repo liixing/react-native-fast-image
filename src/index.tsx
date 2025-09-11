@@ -21,8 +21,8 @@ import {
 const isFabricEnabled = (global as any)?.nativeFabricUIManager != null
 const isTurboModuleEnabled = (global as any).__turboModuleProxy != null
 const FastImageViewModule = isTurboModuleEnabled
-    ? require('./NativeFastImageView').default
-    : NativeModules.FastImageView
+    ? require('./NativeFastImageViewModule').default
+    : NativeModules.FastImageViewModule
 
 const FastImageView = isFabricEnabled
     ? require('./FastImageViewNativeComponent').default
@@ -78,6 +78,12 @@ export interface OnProgressEvent {
     }
 }
 
+export interface OnErrorEvent {
+    nativeEvent: {
+        error: string
+    }
+}
+
 export interface ImageStyle extends FlexStyle, TransformsStyle, ShadowStyleIOS {
     backfaceVisibility?: 'visible' | 'hidden'
     borderBottomLeftRadius?: number
@@ -104,7 +110,7 @@ export interface FastImageProps extends AccessibilityProps, ViewProps {
 
     onLoad?(event: OnLoadEvent): void
 
-    onError?(): void
+    onError?(event: OnErrorEvent): void
 
     onLoadEnd?(): void
 
@@ -210,9 +216,11 @@ function FastImageBase({
     const FABRIC_ENABLED = !!global?.nativeFabricUIManager
 
     // this type differs based on the `source` prop passed
-    const resolvedSource = {
-        ...Image.resolveAssetSource(source as any),
-    } as ImageResolvedAssetSource & { headers: any }
+    const resolvedSource = Image.resolveAssetSource(
+        source as any,
+    ) as ImageResolvedAssetSource & { headers: any }
+    // resolvedSource would be frozen, we can't modify it
+    let modifiedSource = resolvedSource
     if (
         resolvedSource?.headers &&
         (FABRIC_ENABLED || Platform.OS === 'android')
@@ -222,7 +230,7 @@ function FastImageBase({
         Object.keys(resolvedSource.headers).forEach((key) => {
             headersArray.push({ name: key, value: resolvedSource.headers[key] })
         })
-        resolvedSource.headers = headersArray
+        modifiedSource = { ...resolvedSource, headers: headersArray }
     }
     const resolvedDefaultSource = resolveDefaultSource(defaultSource)
     const resolvedDefaultSourceAsString =
@@ -234,7 +242,7 @@ function FastImageBase({
                 {...props}
                 tintColor={tintColor}
                 style={StyleSheet.absoluteFill}
-                source={resolvedSource}
+                source={modifiedSource}
                 defaultSource={resolvedDefaultSourceAsString}
                 onFastImageLoadStart={onLoadStart}
                 onFastImageProgress={onProgress}

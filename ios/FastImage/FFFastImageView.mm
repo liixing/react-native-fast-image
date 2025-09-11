@@ -14,10 +14,13 @@
 
 @property(nonatomic, strong) NSDictionary* onLoadEvent;
 
+@property(nonatomic, strong) NSDictionary *lastErrorEvent;
+
 @end
 
 @implementation FFFastImageView
 
+static NSString * const kFFFastImageDefaultErrorMessage = @"Load failed";
 
 
 - (void)onLoadEventSend:(UIImage *)image {
@@ -82,30 +85,49 @@
 #endif
 }
 
-- (void)onErrorEvent {
+- (void)onErrorEvent:(NSError *)error {
+
+    NSString *msg = error.localizedDescription ?: kFFFastImageDefaultErrorMessage;
+    NSDictionary *event = @{ @"error": msg };
+    self.lastErrorEvent = event;
+
     #ifdef RCT_NEW_ARCH_ENABLED
         if (_eventEmitter != nullptr) {
             std::dynamic_pointer_cast<const facebook::react::FastImageViewEventEmitter>(_eventEmitter)
-            ->onFastImageError(facebook::react::FastImageViewEventEmitter::OnFastImageError{});
+            ->onFastImageError(facebook::react::FastImageViewEventEmitter::OnFastImageError{.error = static_cast<std::string>([error.localizedDescription UTF8String])});
         }
     #else
         if (self.onFastImageError) {
-            self.onFastImageError(@{});
+            self.onFastImageError(@{
+                    @"error": error.localizedDescription ?: kFFFastImageDefaultErrorMessage
+                }
+            );
         }
     #endif
 }
 
 
-
-
-
-- (id) init {
-    self = [super init];
+- (void)commonInitUtils {
     self.resizeMode = RCTResizeModeCover;
     self.clipsToBounds = YES;
+    [[SDImageCodersManager sharedManager] addCoder:[SDImageAVIFCoder sharedCoder]];
+    [[SDImageCodersManager sharedManager] addCoder:[SDImageWebPCoder sharedCoder]];
+}
+
+- (instancetype)initWithFrame:(CGRect)frame {
+//     Called on new arch from FFFastImageComponentView
+    self = [super initWithFrame:frame];
     if (self) {
-       [[SDImageCodersManager sharedManager] addCoder:[SDImageAVIFCoder sharedCoder]];
-       [[SDImageCodersManager sharedManager] addCoder:[SDImageWebPCoder sharedCoder]];
+        [self commonInitUtils];
+    }
+    return self;
+}
+
+- (id) init {
+//     Called on old arch from FFFastImageViewManager
+    self = [super init];
+    if (self) {
+        [self commonInitUtils];
     }
     return self;
 }
@@ -134,7 +156,7 @@
 - (void) setOnFastImageError: (RCTDirectEventBlock)onFastImageError {
     _onFastImageError = onFastImageError;
     if (self.hasErrored && _onFastImageError) {
-        _onFastImageError(@{});
+        _onFastImageError(self.lastErrorEvent ?: @{ @"error": kFFFastImageDefaultErrorMessage});
     }
 }
 
@@ -291,7 +313,7 @@
                     NSURL* _Nullable imageURL) {
                 if (error) {
                     weakSelf.hasErrored = YES;
-                    [weakSelf onErrorEvent];
+                    [weakSelf onErrorEvent:error];
 
                     [weakSelf onLoadEndEvent];
                 } else {

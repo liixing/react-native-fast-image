@@ -137,7 +137,7 @@ If using [ProGuard](https://www.guardsquare.com/proguard), add these rules to `a
 | `onLoadStart`          | `function`                 | Callback when the image starts to load.                                                                                                                                                                                                                 |
 | `onProgress`           | `(event: OnProgressEvent) => void` | Callback when the image is loading, with `event.nativeEvent.loaded` and `event.nativeEvent.total` bytes.                                                                                                         |
 | `onLoad`               | `(event: OnLoadEvent) => void` | Callback when the image is successfully loaded, with `event.nativeEvent.width` and `event.nativeEvent.height` values.                                                                                           |
-| `onError`              | `function`                 | Callback when an error occurs in loading the image or the source is malformed (empty or `null`).                                                                                                                 |
+| `onError`              | `(event: OnErrorEvent) => void`| Callback when an error occurs in loading the image or the source is malformed, with `event.nativeEvent.error`.                                                                                                                 |
 | `onLoadEnd`            | `function`                 | Callback when the image finishes loading, regardless of success or failure.                                                                                                                                       |
 | `style`                | `ViewStyle`                | Style for the image component, supports `borderRadius`.                                                                                                                                                          |
 | `fallback`             | `boolean`                  | If `true`, it will fall back to using `Image`. This still applies styles and layout as with `FastImage`.                                                                                                         |
@@ -182,7 +182,7 @@ Special thanks to:
 [build]: https://github.com/dream-sports-labs/react-native-fast-image/actions?query=workflow%3ACI
 [coverage-badge]: https://img.shields.io/codecov/c/github/dream-sports-labs/react-native-fast-image.svg
 [coverage]: https://codecov.io/github/dream-sports-labs/react-native-fast-image
-[downloads-badge]: https://img.shields.io/npm/dm/react-native-fast-image.svg
+[downloads-badge]: https://img.shields.io/npm/dm/@d11/react-native-fast-image.svg
 [npmtrends]: http://www.npmtrends.com/@d11/react-native-fast-image
 [package]: https://www.npmjs.com/package/@d11/react-native-fast-image
 [version-badge]: https://img.shields.io/npm/v/@d11/react-native-fast-image.svg
